@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require("cors");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -8,6 +9,9 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json({ limit: '50mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }));
 app.use(bodyParser.text({ limit: '200mb' }));
+app.use(cors({
+    origin: ["http://localhost:5173"]
+}))
 
 // Utility functions
 const isPrime = (num) => {

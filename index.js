@@ -92,7 +92,6 @@ app.post('/bfhl', (req, res) => {
     let fileDetails = { file_valid: false, file_mime_type: null, file_size_kb: 0 };
     if (file_b64) {
         fileDetails = validateBase64File(file_b64);
-        console.log(fileDetails);
     }
 
     // Build response

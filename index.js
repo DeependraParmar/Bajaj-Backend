@@ -1,10 +1,13 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(express.json());
+app.use(bodyParser.json({ limit: '50mb', extended: true }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }));
+app.use(bodyParser.text({ limit: '200mb' }));
 
 // Utility functions
 const isPrime = (num) => {
@@ -17,17 +20,29 @@ const isPrime = (num) => {
 
 const validateBase64File = (base64String) => {
     try {
-        const buffer = Buffer.from(base64String, 'base64');
-        const mimeType = buffer.toString('utf8', 0, buffer.length).match(/(image|application)\/[a-z]+/);
+        // Split Base64 string to extract MIME type (optional)
+        const parts = base64String.split(',');
+        const rawData = parts.length > 1 ? parts[1] : parts[0];
+        const buffer = Buffer.from(rawData, 'base64');
+
+        // Detect MIME type from the buffer
+        const mimeType = rawData.match(/data:(.*?);base64/);
+        const detectedMimeType = mimeType ? mimeType[1] : null;
+
+        // Calculate size in KB
+        const sizeKB = (buffer.length / 1024).toFixed(2);
+
         return {
-            valid: !!mimeType,
-            mimeType: mimeType ? mimeType[0] : null,
-            sizeKB: (buffer.length / 1024).toFixed(2),
+            file_valid: !!detectedMimeType,
+            file_mime_type: detectedMimeType,
+            file_size_kb: sizeKB,
         };
-    } catch {
-        return { valid: false, mimeType: null, sizeKB: 0 };
+    } catch (error) {
+        console.error('Error validating Base64 file:', error);
+        return { file_valid: false, file_mime_type: null, file_size_kb: 0 };
     }
 };
+
 
 // Routes
 // GET 
@@ -77,6 +92,7 @@ app.post('/bfhl', (req, res) => {
     let fileDetails = { file_valid: false, file_mime_type: null, file_size_kb: 0 };
     if (file_b64) {
         fileDetails = validateBase64File(file_b64);
+        console.log(fileDetails);
     }
 
     // Build response
